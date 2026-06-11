@@ -9,6 +9,41 @@ interface WeChatTouchEvent {
   changedTouches: WeChatTouch[]
 }
 
+interface WeChatWindowInfo {
+  windowWidth: number
+  windowHeight: number
+  screenWidth: number
+  screenHeight: number
+  pixelRatio: number
+  safeArea?: WeChatSafeArea
+  safeAreaInsets?: WeChatSafeAreaInsets
+}
+
+interface WeChatSafeArea {
+  left: number
+  right: number
+  top: number
+  bottom: number
+  width: number
+  height: number
+}
+
+interface WeChatSafeAreaInsets {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+interface WeChatWindowResizeResult {
+  windowWidth?: number
+  windowHeight?: number
+  size?: {
+    windowWidth: number
+    windowHeight: number
+  }
+}
+
 interface WeChatCloud {
   init(options: { env?: string; traceUser?: boolean }): void
   callFunction<T = unknown>(options: {
@@ -19,6 +54,7 @@ interface WeChatCloud {
 
 interface WeChatMiniGameApi {
   createCanvas(): HTMLCanvasElement
+  getWindowInfo(): WeChatWindowInfo
   getStorageSync(key: string): unknown
   setStorageSync(key: string, value: unknown): void
   login(): Promise<{ code: string }>
@@ -28,6 +64,9 @@ interface WeChatMiniGameApi {
   onTouchCancel(callback: (event: WeChatTouchEvent) => void): void
   onHide(callback: () => void): void
   onShow(callback: () => void): void
+  onWindowResize(
+    callback: (result: WeChatWindowResizeResult) => void,
+  ): void
   cloud?: WeChatCloud
 }
 

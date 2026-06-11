@@ -14,11 +14,25 @@ export class TouchJoystick {
   private touchId: number | null = null
   private readonly radius = 52
 
-  constructor(private readonly screenHeight: number) {
+  constructor(
+    private screenHeight: number,
+    private readonly shouldIgnoreTouch: (touch: WeChatTouch) => boolean = () =>
+      false,
+  ) {
     wx.onTouchStart((event) => this.handleStart(event))
     wx.onTouchMove((event) => this.handleMove(event))
     wx.onTouchEnd((event) => this.handleEnd(event))
     wx.onTouchCancel((event) => this.handleEnd(event))
+  }
+
+  resize(screenHeight: number): void {
+    this.screenHeight = screenHeight
+    if (!this.active) {
+      this.centerX = 0
+      this.centerY = 0
+      this.knobX = 0
+      this.knobY = 0
+    }
   }
 
   private handleStart(event: WeChatTouchEvent): void {
@@ -26,7 +40,11 @@ export class TouchJoystick {
       return
     }
     const touch = event.changedTouches[0]
-    if (!touch || touch.clientY < this.screenHeight * 0.45) {
+    if (
+      !touch ||
+      this.shouldIgnoreTouch(touch) ||
+      touch.clientY < this.screenHeight * 0.45
+    ) {
       return
     }
 

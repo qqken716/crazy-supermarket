@@ -30,7 +30,7 @@ async function writeGameConfig() {
     resolve(gameDirectory, 'game.json'),
     `${JSON.stringify(
       {
-        deviceOrientation: 'portrait',
+        deviceOrientation: 'landscape',
         showStatusBar: false,
         networkTimeout: {
           request: 10000,
@@ -48,9 +48,9 @@ async function writeGameConfig() {
     resolve(outputDirectory, 'project.config.json'),
     `${JSON.stringify(
       {
-        description: 'Crazy Supermarket WeChat Mini Game',
+        description: '满筐小铺微信小游戏',
         appid: appId,
-        projectname: 'crazy-supermarket',
+        projectname: 'mankuang-shop',
         compileType: 'game',
         libVersion: '3.15.2',
         cloudfunctionRoot: 'cloudfunctions/',

@@ -1,5 +1,6 @@
 import {
   createInitialProfile,
+  ensureProfileDefaults,
   isUserProfile,
   type ProfileMutationReason,
   type UserProfile,
@@ -53,7 +54,7 @@ export class GameStore {
   async initialize(): Promise<void> {
     const local = this.readLocal()
     if (local) {
-      this.profile = local
+      this.profile = ensureProfileDefaults(local)
       this.emit()
     }
 
@@ -63,12 +64,14 @@ export class GameStore {
       const cloudResult = await loadCloudProfile()
 
       if (cloudResult.profile) {
-        this.profile = clone(cloudResult.profile)
+        this.profile = ensureProfileDefaults(clone(cloudResult.profile))
         this.syncStatus = 'synced'
         this.lastSyncAt = Date.now()
         this.persistLocalNow()
       } else {
-        this.profile = local ?? createInitialProfile(identity.openId)
+        this.profile = ensureProfileDefaults(
+          local ?? createInitialProfile(identity.openId),
+        )
         this.profile.identity.openId = identity.openId
         this.profile.identity.lastLoginAt = Date.now()
         this.dirty = true
@@ -129,7 +132,7 @@ export class GameStore {
         const result = await saveCloudProfile(snapshot, snapshot.revision)
         if (result.conflict) {
           wx.setStorageSync(CONFLICT_KEY, snapshot)
-          this.profile = clone(result.profile)
+          this.profile = ensureProfileDefaults(clone(result.profile))
           this.dirty = false
           this.syncStatus = 'conflict'
           this.persistLocalNow()
@@ -144,7 +147,7 @@ export class GameStore {
           return
         }
 
-        this.profile = clone(result.profile)
+        this.profile = ensureProfileDefaults(clone(result.profile))
         this.dirty = false
         this.syncStatus = 'synced'
         this.lastSyncAt = Date.now()
@@ -171,7 +174,7 @@ export class GameStore {
   private readLocal(): UserProfile | null {
     try {
       const value = wx.getStorageSync(PROFILE_KEY)
-      return isUserProfile(value) ? clone(value) : null
+      return isUserProfile(value) ? ensureProfileDefaults(clone(value)) : null
     } catch {
       return null
     }

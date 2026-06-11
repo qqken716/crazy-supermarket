@@ -1,6 +1,12 @@
 export const PROFILE_SCHEMA_VERSION = 1 as const
 
-export type ProductId = 'apple' | 'milk' | 'bread' | 'egg' | (string & {})
+export type ProductId =
+  | 'apple'
+  | 'tomato'
+  | 'egg'
+  | 'milk'
+  | 'bread'
+  | (string & {})
 
 export interface Vector2 {
   x: number
@@ -41,6 +47,18 @@ export interface SourceNodeSave {
   unlocked: boolean
 }
 
+export interface ProductionNodeSave {
+  nodeId: string
+  inputProductId: ProductId
+  outputProductId: ProductId
+  level: number
+  inputStock: number
+  outputStock: number
+  capacity: number
+  processingStartedAt: number | null
+  unlocked: boolean
+}
+
 export interface ShelfSave {
   shelfId: string
   productId: ProductId
@@ -60,6 +78,7 @@ export interface WorldSave {
   mapId: string
   unlockedAreaIds: string[]
   sourceNodes: SourceNodeSave[]
+  productionNodes: ProductionNodeSave[]
   shelves: ShelfSave[]
   cashRegisters: CashRegisterSave[]
 }
@@ -89,6 +108,7 @@ export interface GameSettings {
   musicEnabled: boolean
   soundEnabled: boolean
   vibrationEnabled: boolean
+  cameraScale: number
 }
 
 /**
@@ -140,7 +160,7 @@ export function createInitialProfile(openId = ''): UserProfile {
       lifetimeSpent: 0,
     },
     player: {
-      position: { x: 320, y: 480 },
+      position: { x: 900, y: 600 },
       moveSpeedLevel: 1,
       backpackLevel: 1,
       backpackCapacity: 4,
@@ -156,6 +176,36 @@ export function createInitialProfile(openId = ''): UserProfile {
           level: 1,
           unlocked: true,
         },
+        {
+          sourceId: 'tomato-patch-01',
+          productId: 'tomato',
+          level: 1,
+          unlocked: false,
+        },
+      ],
+      productionNodes: [
+        {
+          nodeId: 'chicken-coop-01',
+          inputProductId: 'tomato',
+          outputProductId: 'egg',
+          level: 1,
+          inputStock: 0,
+          outputStock: 0,
+          capacity: 3,
+          processingStartedAt: null,
+          unlocked: false,
+        },
+        {
+          nodeId: 'cow-barn-01',
+          inputProductId: 'tomato',
+          outputProductId: 'milk',
+          level: 1,
+          inputStock: 0,
+          outputStock: 0,
+          capacity: 3,
+          processingStartedAt: null,
+          unlocked: false,
+        },
       ],
       shelves: [
         {
@@ -165,6 +215,30 @@ export function createInitialProfile(openId = ''): UserProfile {
           stock: 0,
           capacity: 8,
           unlocked: true,
+        },
+        {
+          shelfId: 'tomato-shelf-01',
+          productId: 'tomato',
+          level: 1,
+          stock: 0,
+          capacity: 8,
+          unlocked: false,
+        },
+        {
+          shelfId: 'egg-shelf-01',
+          productId: 'egg',
+          level: 1,
+          stock: 0,
+          capacity: 8,
+          unlocked: false,
+        },
+        {
+          shelfId: 'milk-shelf-01',
+          productId: 'milk',
+          level: 1,
+          stock: 8,
+          capacity: 8,
+          unlocked: false,
         },
       ],
       cashRegisters: [
@@ -188,8 +262,94 @@ export function createInitialProfile(openId = ''): UserProfile {
       musicEnabled: true,
       soundEnabled: true,
       vibrationEnabled: true,
+      cameraScale: 1,
     },
   }
+}
+
+export function ensureProfileDefaults(profile: UserProfile): UserProfile {
+  const defaults = createInitialProfile(profile.identity.openId)
+  profile.settings ??= defaults.settings
+  profile.world.sourceNodes ??= []
+  profile.world.productionNodes ??= []
+  profile.world.shelves ??= []
+
+  const cow = profile.world.productionNodes.find(
+    (node) => node.nodeId === 'cow-barn-01',
+  )
+  const packer = profile.world.productionNodes.find(
+    (node) => node.nodeId === 'milk-packer-01',
+  )
+  if (cow) {
+    cow.outputProductId = 'milk'
+    cow.outputStock += packer?.outputStock ?? 0
+    cow.outputStock += packer?.inputStock ?? 0
+    cow.outputStock = Math.min(cow.capacity, cow.outputStock)
+  }
+  profile.world.productionNodes = profile.world.productionNodes.filter(
+    (node) => node.nodeId !== 'milk-packer-01',
+  )
+
+  const rawMilk = profile.player.backpack.find(
+    (stack) => stack.productId === 'raw-milk',
+  )
+  if (rawMilk) {
+    const milk = profile.player.backpack.find(
+      (stack) => stack.productId === 'milk',
+    )
+    if (milk) {
+      milk.quantity += rawMilk.quantity
+      profile.player.backpack = profile.player.backpack.filter(
+        (stack) => stack !== rawMilk,
+      )
+    } else {
+      rawMilk.productId = 'milk'
+    }
+  }
+  profile.settings.cameraScale ??= 1
+
+  for (const source of defaults.world.sourceNodes) {
+    if (!profile.world.sourceNodes.some((item) => item.sourceId === source.sourceId)) {
+      profile.world.sourceNodes.push(source)
+    }
+  }
+  for (const node of defaults.world.productionNodes) {
+    if (!profile.world.productionNodes.some((item) => item.nodeId === node.nodeId)) {
+      profile.world.productionNodes.push(node)
+    }
+  }
+  for (const shelf of defaults.world.shelves) {
+    if (!profile.world.shelves.some((item) => item.shelfId === shelf.shelfId)) {
+      profile.world.shelves.push(shelf)
+    }
+  }
+
+  const milkShelf = profile.world.shelves.find(
+    (shelf) => shelf.shelfId === 'milk-shelf-01',
+  )
+  if (milkShelf && packer) {
+    milkShelf.stock = 8
+    milkShelf.capacity = 8
+  }
+
+  const milkZoneUnlocked = profile.world.unlockedAreaIds.includes('milk-zone')
+  if (milkZoneUnlocked) {
+    profile.world.sourceNodes
+      .filter((source) => source.sourceId === 'tomato-patch-01')
+      .forEach((source) => {
+        source.unlocked = true
+      })
+    profile.world.productionNodes.forEach((node) => {
+      node.unlocked = true
+    })
+    profile.world.shelves
+      .filter((shelf) => shelf.productId !== 'apple')
+      .forEach((shelf) => {
+        shelf.unlocked = true
+      })
+  }
+
+  return profile
 }
 
 export function isUserProfile(value: unknown): value is UserProfile {
