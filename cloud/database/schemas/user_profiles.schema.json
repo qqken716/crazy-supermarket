@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "user_profiles.schema.json",
+  "title": "Crazy Supermarket User Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "_id",
+    "_openid",
+    "schemaVersion",
+    "revision",
+    "clientUpdatedAt",
+    "serverUpdatedAt",
+    "identity",
+    "economy",
+    "player",
+    "world",
+    "upgrades",
+    "quests",
+    "statistics",
+    "settings"
+  ],
+  "properties": {
+    "_id": { "type": "string", "minLength": 1 },
+    "_openid": { "type": "string", "minLength": 1 },
+    "schemaVersion": { "const": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "clientUpdatedAt": { "type": "integer", "minimum": 0 },
+    "serverUpdatedAt": { "type": "integer", "minimum": 0 },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "openId",
+        "displayName",
+        "avatarUrl",
+        "createdAt",
+        "lastLoginAt"
+      ],
+      "properties": {
+        "openId": { "type": "string" },
+        "displayName": { "type": "string", "maxLength": 64 },
+        "avatarUrl": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "integer", "minimum": 0 },
+        "lastLoginAt": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "economy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coins", "lifetimeCoins", "lifetimeSpent"],
+      "properties": {
+        "coins": { "type": "integer", "minimum": 0 },
+        "lifetimeCoins": { "type": "integer", "minimum": 0 },
+        "lifetimeSpent": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "position",
+        "moveSpeedLevel",
+        "backpackLevel",
+        "backpackCapacity",
+        "backpack"
+      ],
+      "properties": {
+        "position": { "$ref": "#/$defs/vector2" },
+        "moveSpeedLevel": { "type": "integer", "minimum": 1 },
+        "backpackLevel": { "type": "integer", "minimum": 1 },
+        "backpackCapacity": { "type": "integer", "minimum": 1 },
+        "backpack": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/inventoryStack" }
+        }
+      }
+    },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mapId",
+        "unlockedAreaIds",
+        "sourceNodes",
+        "shelves",
+        "cashRegisters"
+      ],
+      "properties": {
+        "mapId": { "type": "string", "minLength": 1 },
+        "unlockedAreaIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "sourceNodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceNode" }
+        },
+        "shelves": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/shelf" }
+        },
+        "cashRegisters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cashRegister" }
+        }
+      }
+    },
+    "upgrades": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["upgradeId", "level"],
+        "properties": {
+          "upgradeId": { "type": "string" },
+          "level": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "quests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "questId",
+          "progress",
+          "target",
+          "completed",
+          "rewardClaimed"
+        ],
+        "properties": {
+          "questId": { "type": "string" },
+          "progress": { "type": "number", "minimum": 0 },
+          "target": { "type": "number", "minimum": 0 },
+          "completed": { "type": "boolean" },
+          "rewardClaimed": { "type": "boolean" }
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "playTimeSeconds",
+        "customersServed",
+        "productsSold",
+        "coinsCollected",
+        "sessions"
+      ],
+      "properties": {
+        "playTimeSeconds": { "type": "integer", "minimum": 0 },
+        "customersServed": { "type": "integer", "minimum": 0 },
+        "productsSold": { "type": "integer", "minimum": 0 },
+        "coinsCollected": { "type": "integer", "minimum": 0 },
+        "sessions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["musicEnabled", "soundEnabled", "vibrationEnabled"],
+      "properties": {
+        "musicEnabled": { "type": "boolean" },
+        "soundEnabled": { "type": "boolean" },
+        "vibrationEnabled": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "vector2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "inventoryStack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["productId", "quantity"],
+      "properties": {
+        "productId": { "type": "string", "minLength": 1 },
+        "quantity": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "sourceNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "productId", "level", "unlocked"],
+      "properties": {
+        "sourceId": { "type": "string" },
+        "productId": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1 },
+        "unlocked": { "type": "boolean" }
+      }
+    },
+    "shelf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shelfId",
+        "productId",
+        "level",
+        "stock",
+        "capacity",
+        "unlocked"
+      ],
+      "properties": {
+        "shelfId": { "type": "string" },
+        "productId": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1 },
+        "stock": { "type": "integer", "minimum": 0 },
+        "capacity": { "type": "integer", "minimum": 1 },
+        "unlocked": { "type": "boolean" }
+      }
+    },
+    "cashRegister": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registerId", "level", "unlocked"],
+      "properties": {
+        "registerId": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1 },
+        "unlocked": { "type": "boolean" }
+      }
+    }
+  }
+}

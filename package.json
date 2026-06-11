@@ -1,0 +1,16 @@
+{
+  "name": "crazy-supermarket",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-game.mjs",
+    "dev": "node scripts/build-game.mjs --watch",
+    "type-check": "tsc --noEmit",
+    "open:wechat": "node scripts/open-wechat-devtools.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "esbuild": "^0.25.5",
+    "typescript": "^5.9.3"
+  }
+}
